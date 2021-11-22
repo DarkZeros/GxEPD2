@@ -43,8 +43,8 @@ void GxEPD2_154_D67::_writeScreenBuffer(uint8_t command, uint8_t value)
 {
   if (!_init_display_done) _InitDisplay();
   _setPartialRamArea(0, 0, WIDTH, HEIGHT);
-  _writeCommand(command);
   _startTransfer();
+  _transferCommand(command);
   for (uint32_t i = 0; i < uint32_t(WIDTH) * uint32_t(HEIGHT) / 8; i++)
   {
     _transfer(value);
@@ -71,7 +71,9 @@ void GxEPD2_154_D67::writeImageAgain(const uint8_t bitmap[], int16_t x, int16_t 
 
 void GxEPD2_154_D67::_writeImage(uint8_t command, const uint8_t bitmap[], int16_t x, int16_t y, int16_t w, int16_t h, bool invert, bool mirror_y, bool pgm)
 {
-  delay(1); // yield() to avoid WDT on ESP8266 and ESP32
+#if defined(ESP8266) || defined(ESP32)
+  yield(); // avoid wdt
+#endif
   int16_t wb = (w + 7) / 8; // width bytes, bitmaps are padded
   x -= x % 8; // byte boundary
   w = wb * 8; // byte boundary
@@ -87,8 +89,8 @@ void GxEPD2_154_D67::_writeImage(uint8_t command, const uint8_t bitmap[], int16_
   if (!_init_display_done) _InitDisplay();
   if (_initial_write) writeScreenBuffer(); // initial full screen buffer clean
   _setPartialRamArea(x1, y1, w1, h1);
-  _writeCommand(command);
   _startTransfer();
+  _transferCommand(command);
   for (int16_t i = 0; i < h1; i++)
   {
     for (int16_t j = 0; j < w1 / 8; j++)
@@ -113,7 +115,9 @@ void GxEPD2_154_D67::_writeImage(uint8_t command, const uint8_t bitmap[], int16_
     }
   }
   _endTransfer();
-  delay(1); // yield() to avoid WDT on ESP8266 and ESP32
+#if defined(ESP8266) || defined(ESP32)
+  yield(); // avoid wdt
+#endif
 }
 
 void GxEPD2_154_D67::writeImagePart(const uint8_t bitmap[], int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
@@ -132,7 +136,10 @@ void GxEPD2_154_D67::writeImagePartAgain(const uint8_t bitmap[], int16_t x_part,
 void GxEPD2_154_D67::_writeImagePart(uint8_t command, const uint8_t bitmap[], int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
                                      int16_t x, int16_t y, int16_t w, int16_t h, bool invert, bool mirror_y, bool pgm)
 {
-  delay(1); // yield() to avoid WDT on ESP8266 and ESP32
+  if (_initial_write) writeScreenBuffer(); // initial full screen buffer clean
+#if defined(ESP8266) || defined(ESP32)
+  yield(); // avoid wdt
+#endif
   if ((w_bitmap < 0) || (h_bitmap < 0) || (w < 0) || (h < 0)) return;
   if ((x_part < 0) || (x_part >= w_bitmap)) return;
   if ((y_part < 0) || (y_part >= h_bitmap)) return;
@@ -154,8 +161,8 @@ void GxEPD2_154_D67::_writeImagePart(uint8_t command, const uint8_t bitmap[], in
   if (!_init_display_done) _InitDisplay();
   if (_initial_write) writeScreenBuffer(); // initial full screen buffer clean
   _setPartialRamArea(x1, y1, w1, h1);
-  _writeCommand(command);
   _startTransfer();
+  _transferCommand(command);
   for (int16_t i = 0; i < h1; i++)
   {
     for (int16_t j = 0; j < w1 / 8; j++)
@@ -180,7 +187,9 @@ void GxEPD2_154_D67::_writeImagePart(uint8_t command, const uint8_t bitmap[], in
     }
   }
   _endTransfer();
-  delay(1); // yield() to avoid WDT on ESP8266 and ESP32
+#if defined(ESP8266) || defined(ESP32)
+  yield(); // avoid wdt
+#endif
 }
 
 void GxEPD2_154_D67::writeImage(const uint8_t* black, const uint8_t* color, int16_t x, int16_t y, int16_t w, int16_t h, bool invert, bool mirror_y, bool pgm)
@@ -284,11 +293,13 @@ void GxEPD2_154_D67::powerOff()
 
 void GxEPD2_154_D67::hibernate()
 {
-  _PowerOff();
+  //_PowerOff(); // Not needed before entering deep sleep
   if (_rst >= 0)
   {
-    _writeCommand(0x10); // deep sleep mode
-    _writeData(0x1);     // enter deep sleep
+    _startTransfer();
+    _transferCommand(0x10); // deep sleep mode
+    _transfer(0x1);     // enter deep sleep
+    _endTransfer();
     _hibernating = true;
     _init_display_done = false;
   }
@@ -296,30 +307,34 @@ void GxEPD2_154_D67::hibernate()
 
 void GxEPD2_154_D67::_setPartialRamArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
-  _writeCommand(0x11); // set ram entry mode
-  _writeData(0x03);    // x increase, y increase : normal mode
-  _writeCommand(0x44);
-  _writeData(x / 8);
-  _writeData((x + w - 1) / 8);
-  _writeCommand(0x45);
-  _writeData(y % 256);
-  _writeData(y / 256);
-  _writeData((y + h - 1) % 256);
-  _writeData((y + h - 1) / 256);
-  _writeCommand(0x4e);
-  _writeData(x / 8);
-  _writeCommand(0x4f);
-  _writeData(y % 256);
-  _writeData(y / 256);
+  _startTransfer();
+  _transferCommand(0x11); // set ram entry mode
+  _transfer(0x03);    // x increase, y increase : normal mode
+  _transferCommand(0x44);
+  _transfer(x / 8);
+  _transfer((x + w - 1) / 8);
+  _transferCommand(0x45);
+  _transfer(y % 256);
+  _transfer(y / 256);
+  _transfer((y + h - 1) % 256);
+  _transfer((y + h - 1) / 256);
+  _transferCommand(0x4e);
+  _transfer(x / 8);
+  _transferCommand(0x4f);
+  _transfer(y % 256);
+  _transfer(y / 256);
+  _endTransfer();
 }
 
 void GxEPD2_154_D67::_PowerOn()
 {
   if (!_power_is_on)
   {
-    _writeCommand(0x22);
-    _writeData(0xe0);
-    _writeCommand(0x20);
+    _startTransfer();
+    _transferCommand(0x22);
+    _transfer(0xe0);
+    _transferCommand(0x20);
+    _endTransfer();
     _waitWhileBusy("_PowerOn", power_on_time);
   }
   _power_is_on = true;
@@ -329,9 +344,11 @@ void GxEPD2_154_D67::_PowerOff()
 {
   if (_power_is_on)
   {
-    _writeCommand(0x22);
-    _writeData(0x83);
-    _writeCommand(0x20);
+    _startTransfer();
+    _transferCommand(0x22);
+    _transfer(0x83);
+    _transferCommand(0x20);
+    _endTransfer();
     _waitWhileBusy("_PowerOff", power_off_time);
   }
   _power_is_on = false;
@@ -341,35 +358,43 @@ void GxEPD2_154_D67::_PowerOff()
 void GxEPD2_154_D67::_InitDisplay()
 {
   if (_hibernating) _reset();
-  delay(10); // 10ms according to specs
   _writeCommand(0x12); // soft reset
-  delay(10); // 10ms according to specs
-  _writeCommand(0x01); // Driver output control
-  _writeData(0xC7);
-  _writeData(0x00);
-  _writeData(0x00);
-  _writeCommand(0x3C); // BorderWavefrom
-  _writeData(0x05);
-  _writeCommand(0x18); // Read built-in temperature sensor
-  _writeData(0x80);
+  _waitWhileBusy("_SoftReset", 10); // 10ms max according to specs
+
+  _startTransfer();
+  _transferCommand(0x01); // Driver output control
+  _transfer(0xC7);
+  _transfer(0x00);
+  _transfer(0x00);
+  _transferCommand(0x3C); // BorderWavefrom
+  _transfer(0x05);
+  _transferCommand(0x18); // Read built-in temperature sensor
+  _transfer(0x80);
+  _endTransfer();
+
   _setPartialRamArea(0, 0, WIDTH, HEIGHT);
   _init_display_done = true;
 }
 
 void GxEPD2_154_D67::_Update_Full()
 {
-  _writeCommand(0x22);
-  _writeData(0xf7);
-  _writeCommand(0x20);
+  _startTransfer();
+  _transferCommand(0x22);
+  _transfer(0xf7);
+  _transferCommand(0x20);
+  _endTransfer();
   _waitWhileBusy("_Update_Full", full_refresh_time);
   _power_is_on = false;
 }
 
 void GxEPD2_154_D67::_Update_Part()
 {
-  _writeCommand(0x22);
-  _writeData(0xfc);
-  _writeCommand(0x20);
+  _startTransfer();
+  _transferCommand(0x22);
+  //_transfer(0xcc); // skip temperature load (-5ms)
+  _transfer(0xfc);
+  _transferCommand(0x20);
+  _endTransfer();
   _waitWhileBusy("_Update_Part", partial_refresh_time);
   _power_is_on = true;
 }
