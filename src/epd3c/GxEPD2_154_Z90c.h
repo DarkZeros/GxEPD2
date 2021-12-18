@@ -70,6 +70,9 @@ class GxEPD2_154_Z90c : public GxEPD2_EPD
     void _Init_Part();
     void _Update_Full();
     void _Update_Part();
+
+    void SetLutRed();
+    void SetLutBw();
 };
 
 #endif

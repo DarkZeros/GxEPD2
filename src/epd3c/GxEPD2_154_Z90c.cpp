@@ -384,6 +384,8 @@ void GxEPD2_154_Z90c::_InitDisplay()
   _transferCommand(0x18); //Read built-in temperature sensor
   _transfer(0x80);
   _endTransfer();
+    SetLutBw();
+    SetLutRed();
   _setPartialRamArea(0, 0, WIDTH, HEIGHT);
 }
 
@@ -417,4 +419,94 @@ void GxEPD2_154_Z90c::_Update_Part()
   _transferCommand(0x20);  //Activate Display Update Sequence
   _endTransfer();
   _waitWhileBusy("_Update_Part", partial_refresh_time);
+}
+
+const unsigned char lut_vcom0[] =
+{
+    0x0E, 0x14, 0x01, 0x0A, 0x06, 0x04, 0x0A, 0x0A,
+    0x0F, 0x03, 0x03, 0x0C, 0x06, 0x0A, 0x00
+};
+
+const unsigned char lut_w[] =
+{
+    0x0E, 0x14, 0x01, 0x0A, 0x46, 0x04, 0x8A, 0x4A,
+    0x0F, 0x83, 0x43, 0x0C, 0x86, 0x0A, 0x04
+};
+
+const unsigned char lut_b[] = 
+{
+    0x0E, 0x14, 0x01, 0x8A, 0x06, 0x04, 0x8A, 0x4A,
+    0x0F, 0x83, 0x43, 0x0C, 0x06, 0x4A, 0x04
+};
+
+const unsigned char lut_g1[] = 
+{
+    0x8E, 0x94, 0x01, 0x8A, 0x06, 0x04, 0x8A, 0x4A,
+    0x0F, 0x83, 0x43, 0x0C, 0x06, 0x0A, 0x04
+};
+
+const unsigned char lut_g2[] = 
+{
+    0x8E, 0x94, 0x01, 0x8A, 0x06, 0x04, 0x8A, 0x4A,
+    0x0F, 0x83, 0x43, 0x0C, 0x06, 0x0A, 0x04
+};
+
+const unsigned char lut_vcom1[] = 
+{
+    0x03, 0x1D, 0x01, 0x01, 0x08, 0x23, 0x37, 0x37,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+const unsigned char lut_red0[] = 
+{
+    0x83, 0x5D, 0x01, 0x81, 0x48, 0x23, 0x77, 0x77,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+const unsigned char lut_red1[] = 
+{
+    0x03, 0x1D, 0x01, 0x01, 0x08, 0x23, 0x37, 0x37,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+void GxEPD2_154_Z90c::SetLutBw(void) {
+    _startTransfer();   
+    _transferCommand(0x20);         //g vcom
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_vcom0[i]);
+    } 
+    _transferCommand(0x21);        //g ww --
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_w[i]);
+    } 
+    _transferCommand(0x22);         //g bw r
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_b[i]);
+    } 
+    _transferCommand(0x23);         //g wb w
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_g1[i]);
+    } 
+    _transferCommand(0x24);         //g bb b
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_g2[i]);
+    }
+    _endTransfer();
+}
+
+void GxEPD2_154_Z90c::SetLutRed(void) {
+    _startTransfer();  
+    _transferCommand(0x25);
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_vcom1[i]);
+    } 
+    _transferCommand(0x26);
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_red0[i]);
+    } 
+    _transferCommand(0x27);
+    for(int i = 0; i < 15; i++) {
+        _transfer(lut_red1[i]);
+    }
+    _endTransfer();
 }
