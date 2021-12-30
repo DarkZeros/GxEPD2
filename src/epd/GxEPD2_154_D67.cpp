@@ -367,7 +367,7 @@ void GxEPD2_154_D67::_InitDisplay()
   _transfer(0x00);
   _transfer(0x00);
   _transferCommand(0x3C); // BorderWavefrom
-  _transfer(0x05);
+  _transfer(darkBorder ? 0x02 : 0x05);
   _transferCommand(0x18); // Read built-in temperature sensor
   _transfer(0x80);
   _endTransfer();
