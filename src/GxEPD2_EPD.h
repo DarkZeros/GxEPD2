@@ -115,7 +115,7 @@ class GxEPD2_EPD
     SPIClass* _pSPIx;
     SPISettings _spi_settings;
     bool _initial_write, _initial_refresh;
-    bool _power_is_on, _using_partial_mode, _hibernating;
+    bool _power_is_on, _using_partial_mode, _hibernating, _dark_border;
     uint16_t _reset_duration;
     void (*_busy_callback)(const void*); 
     const void* _busy_callback_parameter;
