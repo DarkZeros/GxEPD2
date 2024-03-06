@@ -99,7 +99,7 @@ class GxEPD2_EPD
     };
     void selectSPI(SPIClass& spi, SPISettings spi_settings);
   protected:
-    void _reset();
+    virtual void _reset();
     void _waitWhileBusy(const char* comment = 0, uint16_t busy_time = 5000);
     void _writeCommand(uint8_t c);
     void _writeData(uint8_t d);
