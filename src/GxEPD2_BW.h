@@ -705,7 +705,7 @@ class GxEPD2_BW : public GxEPD2_GFX_BASE_CLASS
     {
       epd2.hibernate();
     }
-  private:
+  public:
     template <typename T> static inline void
     _swap_(T & a, T & b)
     {
@@ -741,7 +741,7 @@ class GxEPD2_BW : public GxEPD2_GFX_BASE_CLASS
           break;
       }
     }
-  private:
+  public:
     uint8_t _buffer[(GxEPD2_Type::WIDTH / 8) * page_height];
     bool _using_partial_mode, _second_phase, _mirror, _reverse;
     uint16_t _width_bytes, _pixel_bytes;
