@@ -11,6 +11,9 @@
 
 #include "GxEPD2_EPD.h"
 
+
+#include "driver/gpio.h"
+
 #if defined(ESP8266) || defined(ESP32)
 #include <pgmspace.h>
 #else
@@ -54,12 +57,12 @@ void GxEPD2_EPD::init(uint32_t serial_diag_bitrate, bool initial, uint16_t reset
   }
   if (_cs >= 0)
   {
-    digitalWrite(_cs, HIGH);
+    gpio_set_level((gpio_num_t)_cs, HIGH);
     pinMode(_cs, OUTPUT);
   }
   if (_dc >= 0)
   {
-    digitalWrite(_dc, HIGH);
+    gpio_set_level((gpio_num_t)_dc, HIGH);
     pinMode(_dc, OUTPUT);
   }
   _reset();
@@ -158,32 +161,32 @@ void GxEPD2_EPD::_waitWhileBusy(const char* comment, uint16_t busy_time)
 void GxEPD2_EPD::_writeCommand(uint8_t c)
 {
   _pSPIx->beginTransaction(_spi_settings);
-  if (_dc >= 0) digitalWrite(_dc, LOW);
-  if (_cs >= 0) digitalWrite(_cs, LOW);
+  if (_dc >= 0) gpio_set_level((gpio_num_t)_dc, LOW);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, LOW);
   _pSPIx->transfer(c);
-  if (_cs >= 0) digitalWrite(_cs, HIGH);
-  if (_dc >= 0) digitalWrite(_dc, HIGH);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, HIGH);
+  if (_dc >= 0) gpio_set_level((gpio_num_t)_dc, HIGH);
   _pSPIx->endTransaction();
 }
 
 void GxEPD2_EPD::_writeData(uint8_t d)
 {
   _pSPIx->beginTransaction(_spi_settings);
-  if (_cs >= 0) digitalWrite(_cs, LOW);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, LOW);
   _pSPIx->transfer(d);
-  if (_cs >= 0) digitalWrite(_cs, HIGH);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, HIGH);
   _pSPIx->endTransaction();
 }
 
 void GxEPD2_EPD::_writeData(const uint8_t* data, uint16_t n)
 {
   _pSPIx->beginTransaction(_spi_settings);
-  if (_cs >= 0) digitalWrite(_cs, LOW);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, LOW);
   for (uint16_t i = 0; i < n; i++)
   {
     _pSPIx->transfer(*data++);
   }
-  if (_cs >= 0) digitalWrite(_cs, HIGH);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, HIGH);
   _pSPIx->endTransaction();
 }
 
@@ -226,15 +229,15 @@ void GxEPD2_EPD::_writeDataPGM_sCS(const uint8_t* data, uint16_t n, int16_t fill
 void GxEPD2_EPD::_writeCommandData(const uint8_t* pCommandData, uint8_t datalen)
 {
   _pSPIx->beginTransaction(_spi_settings);
-  if (_dc >= 0) digitalWrite(_dc, LOW);
-  if (_cs >= 0) digitalWrite(_cs, LOW);
+  if (_dc >= 0) gpio_set_level((gpio_num_t)_dc, LOW);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, LOW);
   _pSPIx->transfer(*pCommandData++);
-  if (_dc >= 0) digitalWrite(_dc, HIGH);
+  if (_dc >= 0) gpio_set_level((gpio_num_t)_dc, HIGH);
   for (uint8_t i = 0; i < datalen - 1; i++)  // sub the command
   {
     _pSPIx->transfer(*pCommandData++);
   }
-  if (_cs >= 0) digitalWrite(_cs, HIGH);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, HIGH);
   _pSPIx->endTransaction();
 }
 
@@ -256,7 +259,7 @@ void GxEPD2_EPD::_writeCommandDataPGM(const uint8_t* pCommandData, uint8_t datal
 void GxEPD2_EPD::_startTransfer()
 {
   _pSPIx->beginTransaction(_spi_settings);
-  if (_cs >= 0) digitalWrite(_cs, LOW);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, LOW);
 }
 
 void GxEPD2_EPD::_transfer(uint8_t value)
@@ -266,13 +269,13 @@ void GxEPD2_EPD::_transfer(uint8_t value)
 
 void GxEPD2_EPD::_transferCommand(uint8_t value)
 {
-  if (_dc >= 0) digitalWrite(_dc, LOW);
+  if (_dc >= 0) gpio_set_level((gpio_num_t)_dc, LOW);
   SPI.transfer(value);
-  if (_dc >= 0) digitalWrite(_dc, HIGH);
+  if (_dc >= 0) gpio_set_level((gpio_num_t)_dc, HIGH);
 }
 
 void GxEPD2_EPD::_endTransfer()
 {
-  if (_cs >= 0) digitalWrite(_cs, HIGH);
+  if (_cs >= 0) gpio_set_level((gpio_num_t)_cs, HIGH);
   _pSPIx->endTransaction();
 }
